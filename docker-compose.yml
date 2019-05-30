@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  graph-app:
+    build:
+      context: './main-application'
+      args:
+        apacheconfig: graph-apache.conf
+    container_name: graph-php-apache
+    image: inchie/graph-php-apache
+    links:
+      - graph-mysql
+      - graph-neo4j
+    volumes:
+      - /var/www/graph.app:/var/www/htdocs
+    ports:
+      - 8080:80
+    networks:
+      shared_nw:
+        ipv4_address: 172.16.239.27
+
+  graph-mysql:
+    image: mysql:latest
+    container_name: graph-mysql
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-authentication-plugin=mysql_native_password']
+    restart: always
+    volumes:
+      - ./data/mysql/conf.d:/etc/mysql/conf.d
+      - ./data/mysql/mysql-datadir:/var/lib/mysql
+    environment:
+      MYSQL_USER: 'root'
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_DATABASE: 'database'
+    expose:
+      - "3000"
+    networks:
+      shared_nw:
+        ipv4_address: 172.16.239.28
+
+  graph-neo4j:
+    image: neo4j:latest
+    container_name: graph-neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/test
+    volumes:
+      - ./data/neo4j/:/data
+    ports:
+      - 7474:7474
+      - 7687:7687
+    networks:
+      shared_nw:
+        ipv4_address: 172.16.239.29
+
+networks:
+  shared_nw:
+    external:
+      name: shared_nw      
+
